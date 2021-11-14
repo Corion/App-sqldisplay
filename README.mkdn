@@ -1,0 +1,9 @@
+
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/App-sqldisplay_http?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/App-sqldisplay_http)
+[![Windows](https://github.com/Corion/App-sqldisplay_http/workflows/windows/badge.svg)](https://github.com/Corion/App-sqldisplay_http/actions?query=workflow%3Awindows)
+[![MacOS](https://github.com/Corion/App-sqldisplay_http/workflows/macos/badge.svg)](https://github.com/Corion/App-sqldisplay_http/actions?query=workflow%3Amacos)
+[![Linux](https://github.com/Corion/App-sqldisplay_http/workflows/linux/badge.svg)](https://github.com/Corion/App-sqldisplay_http/actions?query=workflow%3Alinux)
+
+# NAME
+
+App::sqldisplay\_http - Display results of SQL queries against a spreadsheet in HTML
