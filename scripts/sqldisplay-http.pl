@@ -79,9 +79,15 @@ package MojoX::ChangeNotify {
 
 };
 
+use Getopt::Long ':config', 'pass_through';
+GetOptions(
+    'f|spreadsheet=s' => \my $spreadsheet_file,
+    'q|query=s' => \my $query_file,
+);
+
 my $watcher = MojoX::ChangeNotify->new();
-my $spreadsheet_file = '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2020/2020 Rechnungen.ods';
-my $query_file       = '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2020/dashboard.yml';
+$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2020/2020 Rechnungen.ods';
+$query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
 $watcher->instantiate_watcher(
 # Add the spreadsheet here

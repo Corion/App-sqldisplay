@@ -51,6 +51,7 @@ my %module = (
 
     PREREQ_PM => {
         'Exporter'           => 5, # for 'import'
+        'Getopt::Long'       => 0,
         'Mojolicious'        => 8,
         'File::Basename'     => 0,
         'Encode'             => 0,
