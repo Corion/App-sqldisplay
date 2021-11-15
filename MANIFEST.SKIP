@@ -21,6 +21,6 @@ Makefile$
 ^.releaserc
 ^.*.cmd
 ^chrome-versions
-^WWW-Mechanize-Chrome
+^App-sqldisplay_http-*
 ^frame-\d+.png
 ^demo/

@@ -6,4 +6,4 @@
 
 # NAME
 
-App::sqldisplay\_http - Display results of SQL queries against a spreadsheet in HTML
+App::sqldisplay\_http - Display live results of SQL queries against a spreadsheet in HTML
