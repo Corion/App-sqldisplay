@@ -19,6 +19,9 @@ use Encode 'decode';
 
 #use MojoX::ChangeNotify;
 
+# Should we read the spreadsheet from the queries file?!
+# At least optionally?
+
 package MojoX::ChangeNotify {
     use strict;
     use warnings;

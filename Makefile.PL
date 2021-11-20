@@ -52,11 +52,13 @@ my %module = (
     PREREQ_PM => {
         'Exporter'           => 5, # for 'import'
         'Getopt::Long'       => 0,
-        'Mojolicious'        => 8,
+        'Mojolicious'        => 8, # for the HTTP output
         'File::Basename'     => 0,
         'Encode'             => 0,
         'Try::Tiny'          => 0,
         'PerlX::Maybe'       => 0,
+        'DBIx::Spreadsheet'  => 0,
+        'Text::Table'        => 0, # For the text output
     },
     TEST_REQUIRES => {
         'Test::More'   => 0,
