@@ -96,7 +96,7 @@ sub run_queries(@queries) {
 }
 
 sub reload_queries( $file ) {
-    @queries = LoadFile($file);
+    @queries = grep { $_->{title} or $_->{sql} } LoadFile($file);
 }
 
 sub reload_sheet( $file ) {
