@@ -42,7 +42,7 @@ GetOptions(
     'q|query=s' => \my $query_file,
 );
 
-$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2020/2020 Rechnungen.ods';
+$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2021/2021 Rechnungen.ods';
 $query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
 sub file_changed( $ev ) {
