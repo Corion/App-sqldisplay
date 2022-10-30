@@ -114,9 +114,16 @@ sub rerun_queries {
 
         my @cols = map { $_->{name} } @{ $r->{headers}};
 
-        my $t = Text::Table->new(map { +{ title => $_->{name}, align => ($_->{type} || '') eq 'numeric' ? 'r' : 'l' } } @{ $r->{headers}});
-        $t->load( map { [ @{$_}{@cols} ]} @{ $r->{rows}} );
-        say $t;
+        if( $r->{error} ) {
+            say $r->{name};
+            say $r->{error};
+
+        } else {
+            my $t = Text::Table->new(map { +{ title => $_->{name}, align => ($_->{type} || '') eq 'numeric' ? 'r' : 'l' } } @{ $r->{headers}});
+            $t->load( map { [ @{$_}{@cols} ]} @{ $r->{rows}} );
+
+            say $t;
+        }
     };
 }
 
