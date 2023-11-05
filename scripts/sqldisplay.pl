@@ -62,7 +62,7 @@ sub file_changed( $ev ) {
 
 
 sub run_query( $dbh, $query ) {
-    my ($sth,$cols,$types,$rows,$error);
+    my ($cols,$rows,$error);
     try {
         my $sth = $dbh->prepare( $query->{sql} );
         $sth->execute();
