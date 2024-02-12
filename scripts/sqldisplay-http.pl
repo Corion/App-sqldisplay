@@ -177,6 +177,7 @@ sub run_query( $dbh, $query ) {
 }
 
 my @queries;
+my $config;
 my $sheet;
 
 sub run_queries(@queries) {
@@ -186,7 +187,7 @@ sub run_queries(@queries) {
 }
 
 sub reload_queries( $file ) {
-    @queries = LoadFile($file);
+    ($config, @queries) = LoadFile($file);
 }
 
 sub reload_sheet( $file ) {
