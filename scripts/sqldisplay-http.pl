@@ -131,19 +131,23 @@ sub add_client( $client ) {
     $id;
 }
 
+sub notify_client( $client_id, @actions ) {
+    say "Notifying $client_id";
+    my $client = $clients{ $client_id };
+    for my $action (@actions) {
+        # Convert path to what the client will likely have requested (duh)
+
+        # These rules should all come from a config file, I guess
+        #app->log->info("Notifying client $client_id of '$action->{name}' change to '$action->{path}'");
+        use Data::Dumper; warn Dumper $action;
+        $client->send({json => $action });
+    };
+}
+
 sub notify_clients( @actions ) {
     my $clients = \%clients;
     for my $client_id (sort keys %$clients ) {
-        my $client = $clients->{ $client_id };
-        say "Notifying $client_id";
-        for my $action (@actions) {
-            # Convert path to what the client will likely have requested (duh)
-
-            # These rules should all come from a config file, I guess
-            #app->log->info("Notifying client $client_id of '$action->{name}' change to '$action->{path}'");
-            use Data::Dumper; warn Dumper $action;
-            $client->send({json => $action });
-        };
+        notify_client( $client_id, @actions );
     };
 }
 
@@ -153,7 +157,7 @@ sub run_query( $dbh, $query ) {
         my $sth = $dbh->prepare( $query->{sql} );
         $sth->execute();
         $rows = $sth->fetchall_arrayref( {} );
-        $cols = [ map { +{ name => decode('UTF-8', $_), type => $rows->[0]->{$_} =~ /^[+-]?\d/ ? 'num' : undef } } @{ $sth->{NAME} }];
+        $cols = [ map { +{ name => decode('UTF-8', $_), type => ($rows->[0]->{$_} // '') =~ /^[+-]?\d/ ? 'num' : undef } } @{ $sth->{NAME} }];
 
         for my $r (@$rows) {
             for (values %$r) {
