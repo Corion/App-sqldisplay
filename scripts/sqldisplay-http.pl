@@ -5,6 +5,7 @@ use warnings;
 use Mojolicious::Lite;
 use File::Basename 'dirname';
 
+use lib 'lib';
 use lib '../DBIx-Spreadsheet/lib';
 use DBIx::Spreadsheet;
 
@@ -16,6 +17,8 @@ use Try::Tiny;
 use PerlX::Maybe;
 use YAML 'LoadFile';
 use Encode 'decode';
+use Mojo::URL;
+use Mojo::File;
 
 #use MojoX::ChangeNotify;
 
@@ -190,9 +193,19 @@ sub reload_queries( $file ) {
     ($config, @queries) = LoadFile($file);
 }
 
+our $server_base;
 sub reload_sheet( $file ) {
     $sheet = DBIx::Spreadsheet->new( file => $file )
         or die "Couldn't read '$file'";
+    $sheet->dbh->sqlite_create_function('url', -1, sub($url, $base=undef) {
+        if( defined $url ) {
+            $base //= $server_base->clone;
+            $base = Mojo::URL->new( $base );
+            return Mojo::URL->new($url)->base($base)->to_abs
+        } else {
+            return undef
+        };
+    });
 }
 
 reload_queries( $query_file );
@@ -200,13 +213,30 @@ reload_sheet( $spreadsheet_file );
 
 websocket sub($c) {
     my $client_id = add_client( $c );
+    $server_base //= $c->req->url->clone->to_abs;
+    # Just in case an old client reconnects
+    # Maybe that client could tell us ...
+    #notify_client( $client_id, { type => 'reload' });
 };
 
 get '/index' => sub( $c ) {
     # rerun all queries
+    $server_base //= $c->req->url->clone->to_abs;
     my @results = run_queries( @queries );
     $c->stash( results => \@results );
 };
+
+# Serve a static document from the "documents" directory
+get '/doc/*document' => sub( $c ) {
+    my $fn = $c->param('document');
+    $fn =~ s!\.\.+!!g;
+    if( ! Mojo::File->new( $config->{documents} )->is_abs ) {
+        $config->{documents} = dirname($query_file) . '/' . $config->{documents};
+    }
+    my $target = join "/", $config->{documents}, $fn;
+    $c->reply->file( $target );
+};
+
 
 app->start;
 #Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
