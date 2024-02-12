@@ -89,7 +89,7 @@ GetOptions(
 );
 
 my $watcher = MojoX::ChangeNotify->new();
-$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2020/2020 Rechnungen.ods';
+$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2022/2022 Rechnungen.ods';
 $query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
 $watcher->instantiate_watcher(
