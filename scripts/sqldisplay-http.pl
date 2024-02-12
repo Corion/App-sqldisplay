@@ -292,28 +292,29 @@ function _ws_reopen() {
             });
             me._ws.addEventListener('message', (msg) => {
             try {
-              var {path, type, selector, attr, str} = JSON.parse(msg.data)
-              } catch(e) { console.log(e) };
-              if (type == 'reload') location.reload()
-              if (type == 'jsInject') eval(str)
-              if (type == 'refetch') {
-                try {
-                Array.from(document.querySelectorAll(selector))
-                  .filter(d => d[attr].includes(path))
-                  .forEach(function( d ) {
-                      try {
-                          const cacheBuster = '?dev=' + Math.floor(Math.random() * 100); // Justin Case, cache buster
-                          d[attr] = d[attr].replace(/\?(?:dev=.*?(?=\&|$))|$/, cacheBuster);
-                          console.log(d[attr]);
-                      } catch( e ) {
-                          console.log(e);
-                      };
-                  });
-                  } catch( e ) {
-                    console.log(e);
-                  };
-              }
-            });
+              var {path, type, selector, attr, str} = JSON.parse(msg.data);
+              console.log(msg.data);
+            } catch(e) { console.log(e) };
+            if (type == 'reload') location.reload()
+            if (type == 'jsInject') eval(str)
+            if (type == 'refetch') {
+              try {
+                  Array.from(document.querySelectorAll(selector))
+                    .filter(d => d[attr].includes(path))
+                    .forEach(function( d ) {
+                        try {
+                            const cacheBuster = '?dev=' + Math.floor(Math.random() * 100); // Justin Case, cache buster
+                            d[attr] = d[attr].replace(/\?(?:dev=.*?(?=\&|$))|$/, cacheBuster);
+                            console.log(d[attr]);
+                        } catch( e ) {
+                            console.log(e);
+                        };
+                    });
+                    } catch( e ) {
+                      console.log(e);
+                    };
+                }
+          });
         },
     };
     me.open();
@@ -322,10 +323,39 @@ function _ws_reopen() {
 var ws = _ws_reopen();
 </script>
 <style>
+body {
+    margin: 0px;
+    padding: 0px;
+    /* width: 100%; */
+    /* height: 100vh; */
+    overflow: hidden;
+}
+.container {
+  width: 100%;
+  height: 100vh;
+}
+.row {
+  width: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  height: 100vh;
+    overflow: hidden;
+}
+
+.column {
+  width: 50%;
+  overflow: auto;
+  /* flex: 1; */
+}
+
 td.num { text-align: right };
 </style>
 </head>
 <body>
+    <div id="container" class="container">
+    <div id="row" class="row">
+    <div class="column" style="overflow: auto;">
 % for my $res (@$results) {
     <h1><%= $res->{title} %></h1>
     <table>
@@ -341,12 +371,18 @@ td.num { text-align: right };
         <tr>
         % for my $c (@{ $res->{headers}}) {
             % my $class = $c->{type} // '';
+            % my $urlify = $c->{name} =~ m!\burl\s*\(!;
+            % if( $urlify ) {
+            <td class="<%= $class %>"><a href="<%= $r->{ $c->{name} } %>" target="detail"><%= $r->{ $c->{name} } %></a></td>
+            % } else {
             <td class="<%= $class %>"><%= $r->{ $c->{name} } %></td>
+            % }
         % }
         </tr>
     % }
     </tbody>
     </table>
 % }
+</div><iframe name="detail" class="column"></iframe>
 </body>
 </html>
