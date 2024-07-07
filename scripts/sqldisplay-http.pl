@@ -351,6 +351,12 @@ body {
 }
 
 td.num { text-align: right };
+
+thead {
+    position: sticky;
+    top: 0;
+}
+
 </style>
 </head>
 <body>
