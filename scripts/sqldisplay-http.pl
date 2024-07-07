@@ -227,6 +227,17 @@ get '/index' => sub( $c ) {
     $c->stash( results => \@results );
 };
 
+get '/query/:name' => sub( $c ) {
+    # Get results for one specific query
+    $server_base //= $c->req->url->clone->to_abs;
+    my $q = $c->param('name');
+
+    (my $query) = grep { $_->{title} eq $q } @queries;
+    my @results = run_queries( $query );
+    $c->stash( res => $results[0] );
+    $c->render( 'query' );
+};
+
 # Serve a static document from the "documents" directory
 get '/doc/*document' => sub( $c ) {
     my $fn = $c->param('document');
@@ -364,32 +375,35 @@ thead {
     <div id="row" class="row">
     <div class="column" style="overflow: auto;">
 % for my $res (@$results) {
-    <h1><%= $res->{title} %></h1>
-    <table>
-    <thead>
-    <tr>
-    % for my $h (@{ $res->{headers}}) {
-        <th><%= $h->{name} %></th>
-    % }
-    </tr>
-    </thead>
-    <tbody>
-    % for my $r (@{ $res->{rows}}) {
-        <tr>
-        % for my $c (@{ $res->{headers}}) {
-            % my $class = $c->{type} // '';
-            % my $urlify = $c->{name} =~ m!\burl\s*\(!;
-            % if( $urlify ) {
-            <td class="<%= $class %>"><a href="<%= $r->{ $c->{name} } %>" target="detail"><%= $r->{ $c->{name} } %></a></td>
-            % } else {
-            <td class="<%= $class %>"><%= $r->{ $c->{name} } %></td>
-            % }
-        % }
-        </tr>
-    % }
-    </tbody>
-    </table>
+%= include 'query', res => $res;
 % }
 </div><iframe name="detail" class="column"></iframe>
 </body>
 </html>
+
+@@query.html.ep
+<h1><%= $res->{title} %></h1>
+<table>
+<thead>
+<tr>
+% for my $h (@{ $res->{headers}}) {
+    <th><%= $h->{name} %></th>
+% }
+</tr>
+</thead>
+<tbody>
+% for my $r (@{ $res->{rows}}) {
+    <tr>
+    % for my $c (@{ $res->{headers}}) {
+        % my $class = $c->{type} // '';
+        % my $urlify = $c->{name} =~ m!\burl\s*\(!;
+        % if( $urlify ) {
+        <td class="<%= $class %>"><a href="<%= $r->{ $c->{name} } %>" target="detail"><%= $r->{ $c->{name} } %></a></td>
+        % } else {
+        <td class="<%= $class %>"><%= $r->{ $c->{name} } %></td>
+        % }
+    % }
+    </tr>
+% }
+</tbody>
+</table>
