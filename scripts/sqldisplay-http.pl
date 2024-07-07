@@ -73,8 +73,6 @@ package MojoX::ChangeNotify {
 
                 $subprocess->progress( @events );
             };
-        #})->then(sub (@results) {
-        #    say "I $results[0] $results[1]!";
         })->catch(sub  {
             my $err = shift;
             say "Subprocess error: $err";
@@ -179,36 +177,43 @@ my @queries;
 my $config;
 my $sheet;
 
-$watcher->on('modify' => sub ( $self, $ev ) {
+sub file_changed( $self, $ev ) {
     say "Modified: $ev->{path}";
-    #if( $ev->path eq $spreadsheet_file ) {
+    my $dirty;
+    if( $ev->path eq $spreadsheet_file ) {
         # reload the DB
         say "Reloading spreadsheet";
         reload_sheet( $spreadsheet_file );
-    #} elsif( $ev->path eq $query_file ) {
+        $dirty = 1;
+    } elsif( $ev->path eq $query_file ) {
         # reload the queries
         say "Reloading queries";
         reload_queries( $query_file );
-    #}
+        $dirty = 1;
+    }
 
-    # (Re)render the tables
-    my @results = run_queries( @queries );
-    my @html = map {
+    if( $dirty ) {
+        # (Re)render the tables
+        my @results = run_queries( @queries );
+        my @html = map {
 
-        my $tx = Mojo::Transaction::HTTP->new();
-        $tx->req->method('GET');
-        $tx->req->url->parse('https://example.com/query');
-        my $c = Mojolicious::Controller->new( app => app(), tx => $tx );
+            my $tx = Mojo::Transaction::HTTP->new();
+            $tx->req->method('GET');
+            $tx->req->url->parse('https://example.com/query');
+            my $c = Mojolicious::Controller->new( app => app(), tx => $tx );
 
-        my $html = $c->render_to_string('query', res => $_);
-        #warn $html;
-        $html
-    } @results;
+            my $html = $c->render_to_string('query', res => $_);
+            #warn $html;
+            $html
+        } @results;
 
-    # Push a reload to the client(s)
-    # Actually, we'd like to push the elements to reload/refresh, maybe?!
-    notify_clients( @html );
-});
+        # Push a reload to the client(s)
+        # Actually, we'd like to push the elements to reload/refresh, maybe?!
+        notify_clients( @html );
+    };
+};
+$watcher->on('create' => \&file_changed);
+$watcher->on('modify' => \&file_changed);
 
 sub run_queries(@queries) {
     my $dbh = $sheet->dbh;
