@@ -297,30 +297,77 @@ __DATA__
 <script src="ws.1.9.12.js"></script>
 <script src="idiomorph-ext.0.3.0.js"></script>
 <style>
-body {
-    margin: 0px;
-    padding: 0px;
-    /* width: 100%; */
-    /* height: 100vh; */
-    overflow: hidden;
-}
+body { margin: 0px; }
+
 .container {
-  width: 100%;
-  height: 100vh;
-}
-.row {
-  width: 100%;
   display: flex;
-  flex: 1;
-  flex-direction: row;
+  flex-flow: column;
+  align-items: stretch;
   height: 100vh;
-    overflow: hidden;
+  background: #eee;
 }
 
-.column {
+.ui-top {
+  height: 100px;
+  width: 100px; /* A fixed width as the default */
+}
+
+.ui-main {
+  flex: 1;
+  /* flex-grow: 1; /* Set the middle element to grow and stretch */
+  overflow: auto;
+  background: #ddd;
+
+  display: flex;
+  flex-flow: row;
+  align-items: stretch;
+}
+
+.ui-main-left {
   width: 50%;
   overflow: auto;
-  /* flex: 1; */
+  background: #ccc;
+}
+
+.ui-main-right {
+  width: 50%;
+  overflow: auto;
+  background: #bbb;
+}
+
+.ui-bottom {
+  margin-top: 1%;
+  min-height: 32px;
+  padding: 0px;
+  margin: 0px;
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tabs > ol {
+  display: inline;
+  /* background: #aaa; */
+}
+
+.tabs > ol > li {
+  width: 100%;
+  padding: 8px;
+  cursor: pointer;
+  display: inline;
+  border: solid 0.1rem black;
+  margin: 0px;
+  margin: 0px;
+}
+
+.tabs li.active {
+    font-weight: bold;
+  border-top: none;
+  background: #ccc;
 }
 
 td.num { text-align: right };
@@ -330,16 +377,26 @@ thead {
     top: 0;
 }
 
+tr:nth-child(odd) {
+    background-color: #DDD;
+}
 </style>
 </head>
 <body hx-ext="ws" ws-connect="/notify">
     <div id="container" class="container">
-    <div id="row" class="row">
-    <div class="column" style="overflow: auto;">
+        <div id="main_content" class="ui-main">
+            <!--<div id="row" class="ui-main-left"> -->
+            <div class="ui-main-left" style="overflow: auto;">
 % for my $res (@$results) {
 %= include 'query', res => $res;
 % }
-</div><iframe name="detail" class="column"></iframe>
+            </div>
+            <iframe name="detail" class="ui-main-right"></iframe>
+        </div>
+        <div class="ui-bottom">
+        Tabs
+        </div>
+    </div>
 </body>
 </html>
 
