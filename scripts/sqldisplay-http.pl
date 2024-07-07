@@ -92,7 +92,7 @@ GetOptions(
 );
 
 my $watcher = MojoX::ChangeNotify->new();
-$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2022/2022 Rechnungen.ods';
+$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2024/2024 Rechnungen.ods';
 $query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
 $watcher->instantiate_watcher(
@@ -103,32 +103,26 @@ $watcher->instantiate_watcher(
     directories => [dirname $spreadsheet_file, dirname $query_file],
 );
 
-$watcher->on('modify' => sub ( $self, $ev ) {
-    say "Modified: $ev->{path}";
-    #if( $ev->path eq $spreadsheet_file ) {
-        # reload the DB
-        say "Reloading spreadsheet";
-        reload_sheet( $spreadsheet_file );
-    #} elsif( $ev->path eq $query_file ) {
-        # reload the queries
-        say "Reloading queries";
-        reload_queries( $query_file );
-    #}
-
-    # Push a reload to the client(s)
-    # Actually, we'd like to push the elements to reload/refresh, maybe?!
-    notify_clients( {type => 'reload'} );
-});
-
 my $last_id = 1;
 my %clients;
 
 sub add_client( $client ) {
+    # It seems that we need some kind of PING / PONG here
+    state $heartbeat = Mojo::IOLoop->timer( 5 => sub($t) {
+        for my $c (values %clients) {
+            use Mojo::WebSocket qw(WS_PING);
+            local $| = 1;
+            print "\rPING\r";
+            $client->send([1, 0, 0, 0, WS_PING, '']);
+        };
+    });
+
     my $id = $last_id++;
     my $clients = \%clients;
     $clients->{ $id } = $client->tx;
     $client->inactivity_timeout(60);
     $client->on(finish => sub( $c, @rest ) {
+        say "Client $id went away";
         delete $clients->{ $id };
     });
     say "Added client $id as WS client";
@@ -143,8 +137,9 @@ sub notify_client( $client_id, @actions ) {
 
         # These rules should all come from a config file, I guess
         #app->log->info("Notifying client $client_id of '$action->{name}' change to '$action->{path}'");
-        use Data::Dumper; warn Dumper $action;
-        $client->send({json => $action });
+        #use Data::Dumper; warn Dumper $action;
+        #$client->send({json => $action });
+        $client->send($action);
     };
 }
 
@@ -184,6 +179,37 @@ my @queries;
 my $config;
 my $sheet;
 
+$watcher->on('modify' => sub ( $self, $ev ) {
+    say "Modified: $ev->{path}";
+    #if( $ev->path eq $spreadsheet_file ) {
+        # reload the DB
+        say "Reloading spreadsheet";
+        reload_sheet( $spreadsheet_file );
+    #} elsif( $ev->path eq $query_file ) {
+        # reload the queries
+        say "Reloading queries";
+        reload_queries( $query_file );
+    #}
+
+    # (Re)render the tables
+    my @results = run_queries( @queries );
+    my @html = map {
+
+        my $tx = Mojo::Transaction::HTTP->new();
+        $tx->req->method('GET');
+        $tx->req->url->parse('https://example.com/query');
+        my $c = Mojolicious::Controller->new( app => app(), tx => $tx );
+
+        my $html = $c->render_to_string('query', res => $_);
+        #warn $html;
+        $html
+    } @results;
+
+    # Push a reload to the client(s)
+    # Actually, we'd like to push the elements to reload/refresh, maybe?!
+    notify_clients( @html );
+});
+
 sub run_queries(@queries) {
     my $dbh = $sheet->dbh;
 
@@ -212,7 +238,7 @@ sub reload_sheet( $file ) {
 reload_queries( $query_file );
 reload_sheet( $spreadsheet_file );
 
-websocket sub($c) {
+websocket '/notify' => sub($c) {
     my $client_id = add_client( $c );
     $server_base //= $c->req->url->clone->to_abs;
     # Just in case an old client reconnects
@@ -257,83 +283,14 @@ __DATA__
 <!DOCTYPE html>
 <html>
 <head>
-<!-- hot-server appends this snippit to inject code via a websocket  -->
-<script>
-function _ws_reopen() {
-    //console.log("Retrying connection");
-    var me = {
-        retry: null,
-        ping: null,
-        was_connected: null,
-        _ws: null,
-        reconnect: () => {
-            if( me.ping ) {
-                clearInterval( me.ping );
-                me.ping = null;
-            };
-            me._ws = null;
-            if(!me.retry) {
-                me.retry = setTimeout( () => { try { me.open(); } catch( e ) { console.log("Whoa" )} }, 5000 );
-            };
-        },
-        open: () => {
-            me.retry = null;
-            me._ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
-            me._ws.addEventListener('close', (e) => {
-                me.reconnect();
-            });
-            me._ws.addEventListener('error', (e) => {
-                me.reconnect();
-            });
-            me._ws.addEventListener('open', () => {
-                if( me.retry ) {
-                    clearInterval(me.retry)
-                    me.retry = null;
-                };
-                me.was_connected = true;
-                if( !me.ping) {
-                    me.ping = setInterval( () => {
-                      try {
-                          me._ws.send( "ping" )
-                      } catch( e ) {
-                          //console.log("Lost connection", e);
-                          me._ws.onerror(e);
-                      };
-                    }, 5000 );
-                };
-            });
-            me._ws.addEventListener('message', (msg) => {
-            try {
-              var {path, type, selector, attr, str} = JSON.parse(msg.data);
-              console.log(msg.data);
-            } catch(e) { console.log(e) };
-            if (type == 'reload') location.reload()
-            if (type == 'jsInject') eval(str)
-            if (type == 'refetch') {
-              try {
-                  Array.from(document.querySelectorAll(selector))
-                    .filter(d => d[attr].includes(path))
-                    .forEach(function( d ) {
-                        try {
-                            const cacheBuster = '?dev=' + Math.floor(Math.random() * 100); // Justin Case, cache buster
-                            d[attr] = d[attr].replace(/\?(?:dev=.*?(?=\&|$))|$/, cacheBuster);
-                            console.log(d[attr]);
-                        } catch( e ) {
-                            console.log(e);
-                        };
-                    });
-                    } catch( e ) {
-                      console.log(e);
-                    };
-                }
-          });
-        },
-    };
-    me.open();
-    return me
-};
-var ws = _ws_reopen();
-</script>
+<script src="htmx.1.9.12.js"></script>
+<!--
+//            if (type == 'reload') location.reload()
+//            if (type == 'jsInject') eval(str)
+//            if (type == 'refetch') {
+-->
+<script src="ws.1.9.12.js"></script>
+<script src="idiomorph-ext.0.3.0.js"></script>
 <style>
 body {
     margin: 0px;
@@ -370,7 +327,7 @@ thead {
 
 </style>
 </head>
-<body>
+<body hx-ext="ws" ws-connect="/notify">
     <div id="container" class="container">
     <div id="row" class="row">
     <div class="column" style="overflow: auto;">
@@ -382,6 +339,7 @@ thead {
 </html>
 
 @@query.html.ep
+<div id="table-<%= $res->{title} %>">
 <h1><%= $res->{title} %></h1>
 <table>
 <thead>
@@ -407,3 +365,4 @@ thead {
 % }
 </tbody>
 </table>
+</div>
