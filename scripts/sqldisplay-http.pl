@@ -252,10 +252,24 @@ websocket '/notify' => sub($c) {
     #notify_client( $client_id, { type => 'reload' });
 };
 
+sub get_tabs( $active ) {
+    [map { { name => $_->{name}, active => $_->{name} eq $active } } $config->{tabs}->@*]
+}
+
 get '/index' => sub( $c ) {
     # rerun all queries
     $server_base //= $c->req->url->clone->to_abs;
-    my @results = run_queries( @queries );
+    my $name = $c->param('tab');
+    my ($active) = grep { $name eq $_->{name} } $config->{tabs}->@*;
+    $active //= $config->{tabs}->[0];
+
+    my %queries = map {
+        $_->{title} => $_;
+    } @queries;
+
+    my @results = run_queries( map { $queries{ $_ } } $active->{queries}->@* );
+    my $tabs = get_tabs( $active->{name} );
+    $c->stash( tabs => $tabs );
     $c->stash( results => \@results );
 };
 
@@ -338,7 +352,7 @@ body { margin: 0px; }
 
 .ui-bottom {
   margin-top: 1%;
-  min-height: 32px;
+  min-height: 64px;
   padding: 0px;
   margin: 0px;
 }
@@ -353,15 +367,18 @@ body { margin: 0px; }
 .tabs > ol {
   display: inline;
   /* background: #aaa; */
+  padding-top: 8px;
+  margin: 0px;
 }
 
 .tabs > ol > li {
   width: 100%;
-  padding: 8px;
+  padding-top: 8px;
+  padding-left: 1em;
+  padding-right: 1em;
   cursor: pointer;
   display: inline;
   border: solid 0.1rem black;
-  margin: 0px;
   margin: 0px;
 }
 
@@ -395,11 +412,22 @@ tr:nth-child(odd) {
             <iframe name="detail" class="ui-main-right"></iframe>
         </div>
         <div class="ui-bottom">
-        Tabs
+%= include 'tabs';
         </div>
     </div>
 </body>
 </html>
+
+@@tabs.html.ep
+<div class="tabs">
+    <ol id="ui-tabs">
+% for my $t ($tabs->@*) {
+        <li class="<%= $t->{active} ? "active" : "" %>">
+            <a href="?tab=<%= $t->{name} %>"><%= $t->{name} %></a>
+        </li>
+% }
+    </ol>
+</div>
 
 @@query.html.ep
 <div id="table-<%= $res->{title} %>">
