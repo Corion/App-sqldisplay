@@ -114,6 +114,7 @@ sub add_client( $client ) {
             $client->send([1, 0, 0, 0, WS_PING, '']);
         };
     });
+    $client = $client->inactivity_timeout(3600);
 
     my $id = $last_id++;
     my $clients = \%clients;
