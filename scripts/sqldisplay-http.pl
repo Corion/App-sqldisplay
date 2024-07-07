@@ -170,7 +170,7 @@ sub run_query( $dbh, $query ) {
         };
     } catch {
         $error = $_;
-        warn $_;
+        warn "'$query->{title}': $_";
     };
     return {
               title => $query->{title},
