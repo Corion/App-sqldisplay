@@ -104,15 +104,16 @@ $watcher->instantiate_watcher(
 );
 
 $watcher->on('modify' => sub ( $self, $ev ) {
-    if( $ev->path eq $spreadsheet_file ) {
+    say "Modified: $ev->{path}";
+    #if( $ev->path eq $spreadsheet_file ) {
         # reload the DB
         say "Reloading spreadsheet";
         reload_sheet( $spreadsheet_file );
-    } elsif( $ev->path eq $query_file ) {
+    #} elsif( $ev->path eq $query_file ) {
         # reload the queries
         say "Reloading queries";
         reload_queries( $query_file );
-    }
+    #}
 
     # Push a reload to the client(s)
     # Actually, we'd like to push the elements to reload/refresh, maybe?!
