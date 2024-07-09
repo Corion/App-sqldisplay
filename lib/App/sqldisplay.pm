@@ -94,4 +94,10 @@ sub run_query( $self, $dbh, $query ) {
     }
 }
 
+sub run_queries($self, @queries) {
+    my $dbh = $self->sheet->dbh;
+
+    map { $self->run_query( $dbh, $_ ) } @queries
+}
+
 1;

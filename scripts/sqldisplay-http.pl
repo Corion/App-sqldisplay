@@ -172,7 +172,7 @@ sub file_changed( $self, $ev ) {
 
     if( $dirty ) {
         # (Re)render the tables
-        my @results = run_queries( $app->queries->@* );
+        my @results = $app->run_queries( $app->queries->@* );
         my @html = map {
 
             my $tx = Mojo::Transaction::HTTP->new();
@@ -192,12 +192,6 @@ sub file_changed( $self, $ev ) {
 };
 $watcher->on('create' => \&file_changed);
 $watcher->on('modify' => \&file_changed);
-
-sub run_queries(@queries) {
-    my $dbh = $app->sheet->dbh;
-
-    map { $app->run_query( $dbh, $_ ) } $app->queries->@*
-}
 
 $app->load_config();
 $app->load_sheet();
@@ -229,7 +223,7 @@ get '/index' => sub( $c ) {
         $_->{title} => $_;
     } $app->queries->@*;
 
-    my @results = run_queries( map { $queries{ $_ } } $active->{queries}->@* );
+    my @results = $app->run_queries( map { $queries{ $_ } } $active->{queries}->@* );
     my $tabs = get_tabs( $active->{name} );
     $c->stash( tabs => $tabs );
     $c->stash( results => \@results );
@@ -243,7 +237,7 @@ get '/query/:name' => sub( $c ) {
     my $q = $c->param('name');
 
     (my $query) = grep { $_->{title} eq $q } $app->queries->@*;
-    my @results = run_queries( $query );
+    my @results = $app->run_queries( $query );
     $c->stash( res => $results[0] );
     $c->render( 'query' );
 };
