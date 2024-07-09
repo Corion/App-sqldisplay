@@ -42,6 +42,10 @@ sub documents( $self ) {
     $self->config->{documents}
 }
 
+sub tabs( $self ) {
+    $self->config->{tabs}
+}
+
 sub load_config( $self, $file = $self->config_file ) {
     my ($config, @queries) = LoadFile($file);
     $self->config( $config );

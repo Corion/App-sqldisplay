@@ -213,7 +213,7 @@ websocket '/notify' => sub($c) {
 };
 
 sub get_tabs( $active ) {
-    [map { { name => $_->{name}, active => $_->{name} eq $active } } $app->config->{tabs}->@*]
+    [map { { name => $_->{name}, active => $_->{name} eq $active } } $app->tabs->@*]
 }
 
 get '/index' => sub( $c ) {
@@ -222,8 +222,8 @@ get '/index' => sub( $c ) {
         $app->url_base( $c->req->url->clone->to_abs );
     }
     my $name = $c->param('tab');
-    my ($active) = grep { $name eq $_->{name} } $app->config->{tabs}->@*;
-    $active //= $app->config->{tabs}->[0];
+    my ($active) = grep { $name eq $_->{name} } $app->tabs->@*;
+    $active //= $app->tabs->[0];
 
     my %queries = map {
         $_->{title} => $_;
