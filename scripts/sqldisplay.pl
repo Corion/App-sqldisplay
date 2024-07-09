@@ -17,6 +17,8 @@ use YAML 'LoadFile';
 use Encode 'decode', 'encode';
 use Text::Table;
 
+use App::sqldisplay;
+
 # Should we read the spreadsheet from the queries file?!
 # At least optionally?
 
@@ -45,67 +47,34 @@ GetOptions(
 $spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2021/2021 Rechnungen.ods';
 $query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
+my $app = App::sqldisplay->new(
+    spreadsheet_file => $spreadsheet_file,
+    config_file => $query_file,
+);
+
 sub file_changed( $ev ) {
+    my $dirty;
     if( $ev->path eq $spreadsheet_file ) {
         # reload the DB
         say "Reloading spreadsheet";
-        reload_sheet( $spreadsheet_file );
+        $app->load_sheet();
+        $dirty = 1;
     } elsif( $ev->path eq $query_file ) {
         # reload the queries
         say "Reloading queries";
-        reload_queries( $query_file );
+        $app->load_config();
+        $dirty = 1;
     }
 
-    # Rerun and re-output queries
-    rerun_queries();
-}
+    if( $dirty ) {
 
-
-sub run_query( $dbh, $query ) {
-    my ($cols,$rows,$error);
-    try {
-        my $sth = $dbh->prepare( $query->{sql} );
-        $sth->execute();
-        $rows = $sth->fetchall_arrayref( {} );
-        $cols = [ map { +{ name => decode('UTF-8', $_), type => $rows->[0]->{$_} =~ /^[+-]?\d/ ? 'num' : undef } } @{ $sth->{NAME} }];
-
-        for my $r (@$rows) {
-            for (values %$r) {
-                $_ = decode('UTF-8', $_);
-            };
-        };
-    } catch {
-        $error = $_;
-        warn $_;
-    };
-    return {
-              title => $query->{title},
-            headers => $cols,
-               rows => $rows,
-        maybe error => $error,
+        # Rerun and re-output queries
+        rerun_queries();
     }
-}
-
-my @queries;
-my $sheet;
-
-sub run_queries(@queries) {
-    my $dbh = $sheet->dbh;
-
-    map { run_query( $dbh, $_ ) } @queries
-}
-
-sub reload_queries( $file ) {
-    @queries = grep { $_->{title} or $_->{sql} } LoadFile($file);
-}
-
-sub reload_sheet( $file ) {
-    $sheet = DBIx::Spreadsheet->new( file => $file )
-        or die "Couldn't read '$file'";
 }
 
 sub rerun_queries {
-    my @results = run_queries( @queries );
+    my @results = $app->run_queries($app->queries->@*);
 
     system('clear');
 
@@ -129,8 +98,8 @@ sub rerun_queries {
 
 binmode STDOUT, ':encoding(UTF-8)';
 
-reload_queries( $query_file );
-reload_sheet( $spreadsheet_file );
+$app->load_config();
+$app->load_sheet();
 rerun_queries();
 instantiate_watcher(
 # Add the spreadsheet here
