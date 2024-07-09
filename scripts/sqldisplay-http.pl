@@ -219,11 +219,7 @@ get '/index' => sub( $c ) {
     my ($active) = grep { $name eq $_->{name} } $app->tabs->@*;
     $active //= $app->tabs->[0];
 
-    my %queries = map {
-        $_->{title} => $_;
-    } $app->queries->@*;
-
-    my @results = $app->run_queries( map { $queries{ $_ } } $active->{queries}->@* );
+    my @results = $app->run_queries( $app->queries_for_tab( $name ) );
     my $tabs = get_tabs( $active->{name} );
     $c->stash( tabs => $tabs );
     $c->stash( results => \@results );

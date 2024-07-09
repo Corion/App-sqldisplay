@@ -100,4 +100,17 @@ sub run_queries($self, @queries) {
     map { $self->run_query( $dbh, $_ ) } @queries
 }
 
+sub queries_for_tab( $self, $tabname ) {
+
+    (my $active) = grep { $tabname eq $_->{name} } $self->tabs->@*;
+    croak "No tab '$tabname' found"
+        if ! $active;
+
+    my %queries = map {
+        $_->{title} => $_;
+    } $self->queries->@*;
+
+    return map { $queries{ $_ } } $active->{queries}->@*
+}
+
 1;
