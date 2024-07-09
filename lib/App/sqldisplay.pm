@@ -7,6 +7,7 @@ use Scalar::Util 'weaken';
 use Carp 'croak';
 use YAML 'LoadFile';
 use Encode 'decode';
+use File::Basename;
 
 use Moo 2;
 
@@ -39,7 +40,10 @@ has 'url_base' => (
 );
 
 sub documents( $self ) {
-    $self->config->{documents}
+    if( ! Mojo::File->new( $self->{config}->documents )->is_abs ) {
+        $self->config->{documents} = dirname($self->query_file) . '/' . $self->config->{documents};
+    }
+    return $self->config->{documents}
 }
 
 sub tabs( $self ) {
