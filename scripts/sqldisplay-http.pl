@@ -161,12 +161,12 @@ sub file_changed( $self, $ev ) {
     if( $ev->path eq $spreadsheet_file ) {
         # reload the DB
         say "Reloading spreadsheet";
-        reload_sheet( $spreadsheet_file );
+        $app->load_sheet();
         $dirty = 1;
     } elsif( $ev->path eq $query_file ) {
         # reload the queries
         say "Reloading queries";
-        $app->load_config( $query_file );
+        $app->load_config();
         $dirty = 1;
     }
 
