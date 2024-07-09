@@ -53,6 +53,7 @@ my $app = App::sqldisplay->new(
 );
 
 sub file_changed( $ev ) {
+    my $dirty;
     if( $ev->path eq $spreadsheet_file ) {
         # reload the DB
         say "Reloading spreadsheet";
