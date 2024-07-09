@@ -35,6 +35,10 @@ has 'url_base' => (
     is => 'rw',
 );
 
+sub documents( $self ) {
+    $self->config->{documents}
+}
+
 sub load_config( $self, $file = $self->config_file ) {
     my ($config, @queries) = LoadFile($file);
     $self->config( $config );

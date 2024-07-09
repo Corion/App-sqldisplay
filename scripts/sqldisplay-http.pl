@@ -280,10 +280,10 @@ get '/query/:name' => sub( $c ) {
 get '/doc/*document' => sub( $c ) {
     my $fn = $c->param('document');
     $fn =~ s!\.\.+!!g;
-    if( ! Mojo::File->new( $app->config->{documents} )->is_abs ) {
-        $app->config->{documents} = dirname($query_file) . '/' . $app->config->{documents};
+    if( ! Mojo::File->new( $app->documents )->is_abs ) {
+        $app->config->{documents} = dirname($query_file) . '/' . $app->documents;
     }
-    my $target = join "/", $app->config->{documents}, $fn;
+    my $target = join "/", $app->documents, $fn;
     $c->reply->file( $target );
 };
 
