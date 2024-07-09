@@ -15,10 +15,11 @@ no warnings 'experimental::signatures';
 
 use Try::Tiny;
 use PerlX::Maybe;
-use YAML 'LoadFile';
 use Encode 'decode';
 use Mojo::URL;
 use Mojo::File;
+
+use App::sqldisplay;
 
 #use MojoX::ChangeNotify;
 
@@ -87,10 +88,13 @@ use Getopt::Long ':config', 'pass_through';
 GetOptions(
     'f|spreadsheet=s' => \my $spreadsheet_file,
     'q|query=s' => \my $query_file,
+    'y|year=s' => \my $year,
 );
 
+$year //= (localtime)[5] + 1900;
+
 my $watcher = MojoX::ChangeNotify->new();
-$spreadsheet_file //= '/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung 2024/2024 Rechnungen.ods';
+$spreadsheet_file //= "/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung $year/$year Rechnungen.ods";
 $query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
 $watcher->instantiate_watcher(
@@ -174,9 +178,10 @@ sub run_query( $dbh, $query ) {
     }
 }
 
-my @queries;
-my $config;
-my $sheet;
+my $app = App::sqldisplay->new(
+    spreadsheet_file => $spreadsheet_file,
+    config_file => $query_file,
+);
 
 sub file_changed( $self, $ev ) {
     say "Modified: $ev->{path}";
@@ -189,13 +194,13 @@ sub file_changed( $self, $ev ) {
     } elsif( $ev->path eq $query_file ) {
         # reload the queries
         say "Reloading queries";
-        reload_queries( $query_file );
+        $app->load_config( $query_file );
         $dirty = 1;
     }
 
     if( $dirty ) {
         # (Re)render the tables
-        my @results = run_queries( @queries );
+        my @results = run_queries( $app->queries->@* );
         my @html = map {
 
             my $tx = Mojo::Transaction::HTTP->new();
@@ -217,55 +222,40 @@ $watcher->on('create' => \&file_changed);
 $watcher->on('modify' => \&file_changed);
 
 sub run_queries(@queries) {
-    my $dbh = $sheet->dbh;
+    my $dbh = $app->sheet->dbh;
 
-    map { run_query( $dbh, $_ ) } @queries
+    map { run_query( $dbh, $_ ) } $app->queries->@*
 }
 
-sub reload_queries( $file ) {
-    ($config, @queries) = LoadFile($file);
-}
-
-our $server_base;
-sub reload_sheet( $file ) {
-    $sheet = DBIx::Spreadsheet->new( file => $file )
-        or die "Couldn't read '$file'";
-    $sheet->dbh->sqlite_create_function('url', -1, sub($url, $base=undef) {
-        if( defined $url ) {
-            $base //= $server_base->clone;
-            $base = Mojo::URL->new( $base );
-            return Mojo::URL->new($url)->base($base)->to_abs
-        } else {
-            return undef
-        };
-    });
-}
-
-reload_queries( $query_file );
-reload_sheet( $spreadsheet_file );
+$app->load_config();
+$app->load_sheet();
 
 websocket '/notify' => sub($c) {
     my $client_id = add_client( $c );
-    $server_base //= $c->req->url->clone->to_abs;
+    if(! $app->url_base ) {
+        $app->url_base( $c->req->url->clone->to_abs );
+    };
     # Just in case an old client reconnects
     # Maybe that client could tell us ...
     #notify_client( $client_id, { type => 'reload' });
 };
 
 sub get_tabs( $active ) {
-    [map { { name => $_->{name}, active => $_->{name} eq $active } } $config->{tabs}->@*]
+    [map { { name => $_->{name}, active => $_->{name} eq $active } } $app->config->{tabs}->@*]
 }
 
 get '/index' => sub( $c ) {
     # rerun all queries
-    $server_base //= $c->req->url->clone->to_abs;
+    if( ! $app->url_base ) {
+        $app->url_base( $c->req->url->clone->to_abs );
+    }
     my $name = $c->param('tab');
-    my ($active) = grep { $name eq $_->{name} } $config->{tabs}->@*;
-    $active //= $config->{tabs}->[0];
+    my ($active) = grep { $name eq $_->{name} } $app->config->{tabs}->@*;
+    $active //= $app->config->{tabs}->[0];
 
     my %queries = map {
         $_->{title} => $_;
-    } @queries;
+    } $app->queries->@*;
 
     my @results = run_queries( map { $queries{ $_ } } $active->{queries}->@* );
     my $tabs = get_tabs( $active->{name} );
@@ -275,10 +265,12 @@ get '/index' => sub( $c ) {
 
 get '/query/:name' => sub( $c ) {
     # Get results for one specific query
-    $server_base //= $c->req->url->clone->to_abs;
+    if(! $app->url_base ) {
+        $app->url_base( $c->req->url->clone->to_abs );
+    };
     my $q = $c->param('name');
 
-    (my $query) = grep { $_->{title} eq $q } @queries;
+    (my $query) = grep { $_->{title} eq $q } $app->queries->@*;
     my @results = run_queries( $query );
     $c->stash( res => $results[0] );
     $c->render( 'query' );
@@ -288,10 +280,10 @@ get '/query/:name' => sub( $c ) {
 get '/doc/*document' => sub( $c ) {
     my $fn = $c->param('document');
     $fn =~ s!\.\.+!!g;
-    if( ! Mojo::File->new( $config->{documents} )->is_abs ) {
-        $config->{documents} = dirname($query_file) . '/' . $config->{documents};
+    if( ! Mojo::File->new( $app->config->{documents} )->is_abs ) {
+        $app->config->{documents} = dirname($query_file) . '/' . $app->config->{documents};
     }
-    my $target = join "/", $config->{documents}, $fn;
+    my $target = join "/", $app->config->{documents}, $fn;
     $c->reply->file( $target );
 };
 
@@ -351,8 +343,7 @@ body { margin: 0px; }
 }
 
 .ui-bottom {
-  margin-top: 1%;
-  min-height: 64px;
+  min-height: 32px;
   padding: 0px;
   margin: 0px;
 }
