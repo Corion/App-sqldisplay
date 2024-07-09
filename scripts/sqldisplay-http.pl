@@ -13,9 +13,6 @@ use 5.020; # for signatures
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-use Try::Tiny;
-use PerlX::Maybe;
-use Encode 'decode';
 use Mojo::URL;
 use Mojo::File;
 
@@ -153,31 +150,6 @@ sub notify_clients( @actions ) {
     };
 }
 
-sub run_query( $dbh, $query ) {
-    my ($sth,$cols,$types,$rows,$error);
-    try {
-        my $sth = $dbh->prepare( $query->{sql} );
-        $sth->execute();
-        $rows = $sth->fetchall_arrayref( {} );
-        $cols = [ map { +{ name => decode('UTF-8', $_), type => ($rows->[0]->{$_} // '') =~ /^[+-]?\d/ ? 'num' : undef } } @{ $sth->{NAME} }];
-
-        for my $r (@$rows) {
-            for (values %$r) {
-                $_ = decode('UTF-8', $_);
-            };
-        };
-    } catch {
-        $error = $_;
-        warn "'$query->{title}': $_";
-    };
-    return {
-              title => $query->{title},
-            headers => $cols,
-               rows => $rows,
-        maybe error => $error,
-    }
-}
-
 my $app = App::sqldisplay->new(
     spreadsheet_file => $spreadsheet_file,
     config_file => $query_file,
@@ -224,7 +196,7 @@ $watcher->on('modify' => \&file_changed);
 sub run_queries(@queries) {
     my $dbh = $app->sheet->dbh;
 
-    map { run_query( $dbh, $_ ) } $app->queries->@*
+    map { $app->run_query( $dbh, $_ ) } $app->queries->@*
 }
 
 $app->load_config();
@@ -423,6 +395,9 @@ tr:nth-child(odd) {
 @@query.html.ep
 <div id="table-<%= $res->{title} %>">
 <h1><%= $res->{title} %></h1>
+% if( $res->{error} ) {
+    <tt><%= $res->{error} %></tt>
+% } else {
 <table>
 <thead>
 <tr>
@@ -447,4 +422,5 @@ tr:nth-child(odd) {
 % }
 </tbody>
 </table>
+% }
 </div>

@@ -1,9 +1,12 @@
 package App::sqldisplay 0.01;
 use 5.020;
 use experimental 'signatures';
+use Try::Tiny;
+use PerlX::Maybe;
 use Scalar::Util 'weaken';
 use Carp 'croak';
 use YAML 'LoadFile';
+use Encode 'decode';
 
 use Moo 2;
 
@@ -61,6 +64,30 @@ sub load_sheet( $self, $file = $self->spreadsheet_file ) {
     });
     $self->sheet( $sheet );
     return $sheet
+}
+
+sub run_query( $self, $dbh, $query ) {
+    my ($sth,$cols,$types,$rows,$error);
+    try {
+        my $sth = $dbh->prepare( $query->{sql} );
+        $sth->execute();
+        $rows = $sth->fetchall_arrayref( {} );
+        $cols = [ map { +{ name => decode('UTF-8', $_), type => ($rows->[0]->{$_} // '') =~ /^[+-]?\d/ ? 'num' : undef } } @{ $sth->{NAME} }];
+
+        for my $r (@$rows) {
+            for (values %$r) {
+                $_ = decode('UTF-8', $_);
+            };
+        };
+    } catch {
+        $error = $_;
+    };
+    return {
+              title => $query->{title},
+            headers => $cols,
+               rows => $rows,
+        maybe error => $error,
+    }
 }
 
 1;
