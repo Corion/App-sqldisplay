@@ -276,7 +276,7 @@ body { margin: 0px; }
   flex-flow: column;
   align-items: stretch;
   height: 100vh;
-  background: #eee;
+  /* background: #eee; */
 }
 
 .ui-top {
@@ -288,7 +288,7 @@ body { margin: 0px; }
   flex: 1;
   /* flex-grow: 1; /* Set the middle element to grow and stretch */
   overflow: auto;
-  background: #ddd;
+  /* background: #ddd; */
 
   display: flex;
   flex-flow: row;
@@ -298,13 +298,13 @@ body { margin: 0px; }
 .ui-main-left {
   width: 50%;
   overflow: auto;
-  background: #ccc;
+  /* background: #ccc; */
 }
 
 .ui-main-right {
   width: 50%;
   overflow: auto;
-  background: #bbb;
+  /* background: #bbb; */
 }
 
 .ui-bottom {
@@ -357,7 +357,7 @@ tr:nth-child(odd) {
 </style>
 </head>
 <body hx-ext="ws" ws-connect="/notify">
-    <div id="container" class="container">
+    <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
             <!--<div id="row" class="ui-main-left"> -->
             <div class="ui-main-left" style="overflow: auto;">
@@ -389,9 +389,11 @@ tr:nth-child(odd) {
 <div id="table-<%= $res->{title} %>">
 <h1><%= $res->{title} %></h1>
 % if( $res->{error} ) {
+    <div class="error">
     <tt><%= $res->{error} %></tt>
+    </div>
 % } else {
-<table>
+<table class="table">
 <thead>
 <tr>
 % for my $h (@{ $res->{headers}}) {
