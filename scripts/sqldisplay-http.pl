@@ -255,6 +255,8 @@ __DATA__
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="htmx.1.9.12.js"></script>
 <!--
 //            if (type == 'reload') location.reload()
@@ -263,10 +265,13 @@ __DATA__
 -->
 <script src="ws.1.9.12.js"></script>
 <script src="idiomorph-ext.0.3.0.js"></script>
+
+
+<link href="bootstrap.5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <style>
 body { margin: 0px; }
 
-.container {
+.my-container {
   display: flex;
   flex-flow: column;
   align-items: stretch;
