@@ -105,13 +105,15 @@ $watcher->instantiate_watcher(
 my $last_id = 1;
 my %clients;
 
+app->plugin('CleanFragment');
+
 sub add_client( $client ) {
     # It seems that we need some kind of PING / PONG here
     state $heartbeat = Mojo::IOLoop->timer( 5 => sub($t) {
         for my $c (values %clients) {
             use Mojo::WebSocket qw(WS_PING);
             local $| = 1;
-            print "\rPING\r";
+            #print "\rPING\r";
             $client->send([1, 0, 0, 0, WS_PING, '']);
         };
     });
@@ -133,12 +135,6 @@ sub notify_client( $client_id, @actions ) {
     say "Notifying $client_id";
     my $client = $clients{ $client_id };
     for my $action (@actions) {
-        # Convert path to what the client will likely have requested (duh)
-
-        # These rules should all come from a config file, I guess
-        #app->log->info("Notifying client $client_id of '$action->{name}' change to '$action->{path}'");
-        #use Data::Dumper; warn Dumper $action;
-        #$client->send({json => $action });
         $client->send($action);
     };
 }
@@ -156,7 +152,7 @@ my $app = App::sqldisplay->new(
 );
 
 sub file_changed( $self, $ev ) {
-    say "Modified: $ev->{path}";
+    #say "Modified: $ev->{path}";
     my $dirty;
     if( $ev->path eq $spreadsheet_file ) {
         # reload the DB
