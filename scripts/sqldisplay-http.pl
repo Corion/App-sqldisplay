@@ -386,7 +386,7 @@ thead {
 <div id="table-<%= $res->{title} %>">
 <h1><%= $res->{title} %></h1>
 % if( $res->{error} ) {
-    <div class="error">
+    <div class="text-danger">
     <tt><%= $res->{error} %></tt>
     </div>
 % } else {
