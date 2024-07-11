@@ -18,6 +18,19 @@ use Mojo::File;
 
 use App::sqldisplay;
 
+# CamelCase plugin name
+package Mojolicious::Plugin::CleanFragment {
+use 5.020;
+use Mojo::Base 'Mojolicious::Plugin', -signatures;
+use Text::CleanFragment;
+
+sub register ($self, $app, $conf) {
+    $app->helper('clean_fragment' => sub($self,@args) { clean_fragment(@args)} );
+}
+}
+
+  # M
+
 #use MojoX::ChangeNotify;
 
 # Should we read the spreadsheet from the queries file?!
@@ -199,27 +212,37 @@ websocket '/notify' => sub($c) {
     };
     # Just in case an old client reconnects
     # Maybe that client could tell us ...
-    #notify_client( $client_id, { type => 'reload' });
+    #if( $c->param('version') ne $checksum ) {
+        say "Updating client page";
+        render_index($c);
+        my $html = $c->render_to_string('index');
+        notify_client( $client_id => $html );
+    #};
 };
 
 sub get_tabs( $active ) {
     [map { { name => $_->{name}, active => $_->{name} eq $active } } $app->tabs->@*]
 }
 
-get '/index' => sub( $c ) {
+sub render_index( $c ) {
     # rerun all queries
     if( ! $app->url_base ) {
         $app->url_base( $c->req->url->clone->to_abs );
     }
     my $name = $c->param('tab');
-    my ($active) = grep { $name eq $_->{name} } $app->tabs->@*;
+    my $active;
+    if( defined $name ) {
+        ($active) = grep { $name eq $_->{name} } $app->tabs->@*;
+    };
     $active //= $app->tabs->[0];
+    $name //= $active->{name};
 
     my @results = $app->run_queries( $app->queries_for_tab( $name ) );
     my $tabs = get_tabs( $active->{name} );
     $c->stash( tabs => $tabs );
     $c->stash( results => \@results );
 };
+get '/index' => \&render_index;
 
 get '/query/:name' => sub( $c ) {
     # Get results for one specific query
@@ -261,7 +284,6 @@ __DATA__
 -->
 <script src="ws.1.9.12.js"></script>
 <script src="idiomorph-ext.0.3.0.js"></script>
-
 
 <link href="bootstrap.5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <style>
@@ -349,7 +371,7 @@ thead {
 
 </style>
 </head>
-<body hx-ext="ws" ws-connect="/notify">
+<body hx-ext="ws" ws-connect="/notify" >
     <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
             <!--<div id="row" class="ui-main-left"> -->
@@ -379,7 +401,7 @@ thead {
 </div>
 
 @@query.html.ep
-<div id="table-<%= $res->{title} %>">
+<div id="table-<%= clean_fragment($res->{title}) %>" hx-swap-oob="true">
 <h1><%= $res->{title} %></h1>
 % if( $res->{error} ) {
     <div class="text-danger">
