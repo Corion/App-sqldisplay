@@ -393,7 +393,7 @@ tr:nth-child(odd) {
     <tt><%= $res->{error} %></tt>
     </div>
 % } else {
-<table class="table">
+<table class="table table-hover">
 <thead>
 <tr>
 % for my $h (@{ $res->{headers}}) {
