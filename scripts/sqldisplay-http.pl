@@ -351,9 +351,6 @@ thead {
     top: 0;
 }
 
-tr:nth-child(odd) {
-    background-color: #DDD;
-}
 </style>
 </head>
 <body hx-ext="ws" ws-connect="/notify">
@@ -393,7 +390,7 @@ tr:nth-child(odd) {
     <tt><%= $res->{error} %></tt>
     </div>
 % } else {
-<table class="table table-hover">
+<table class="table table-hover table-striped">
 <thead>
 <tr>
 % for my $h (@{ $res->{headers}}) {
