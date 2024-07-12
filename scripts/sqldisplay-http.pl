@@ -290,11 +290,6 @@ __DATA__
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="htmx.1.9.12.js"></script>
-<!--
-//            if (type == 'reload') location.reload()
-//            if (type == 'jsInject') eval(str)
-//            if (type == 'refetch') {
--->
 <script src="ws.1.9.12.js"></script>
 <script src="idiomorph-ext.0.3.0.js"></script>
 
