@@ -1,0 +1,33 @@
+<div id="table-<%= clean_fragment($res->{title}) %>">
+<h1><%= $res->{title} %></h1>
+% if( $res->{error} ) {
+    <div class="text-danger">
+    <tt><%= $res->{error} %></tt>
+    </div>
+% } else {
+<table class="table table-hover table-striped">
+<thead>
+<tr>
+% for my $h (@{ $res->{headers}}) {
+    <th><%= $h->{name} %></th>
+% }
+</tr>
+</thead>
+<tbody>
+% for my $r (@{ $res->{rows}}) {
+    <tr>
+    % for my $c (@{ $res->{headers}}) {
+        % my $class = $c->{type} // '';
+        % my $urlify = $c->{name} =~ m!\burl\s*\(!;
+        % if( $urlify ) {
+        <td class="<%= $class %>"><a href="<%= $r->{ $c->{name} } %>" target="detail"><%= $r->{ $c->{name} } %></a></td>
+        % } else {
+        <td class="<%= $class %>"><%= $r->{ $c->{name} } %></td>
+        % }
+    % }
+    </tr>
+% }
+</tbody>
+</table>
+% }
+</div>
