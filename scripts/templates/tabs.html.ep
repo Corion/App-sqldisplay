@@ -1,0 +1,10 @@
+<div class="tabs" id="nav-tabs" hx-boost="true">
+    <ol id="ui-tabs">
+% for my $t ($tabs->@*) {
+        <li class="<%= $t->{active} ? "active" : "" %>">
+            <a href="?tab=<%= $t->{name} %>"><%= $t->{name} %></a>
+        </li>
+% }
+    </ol>
+</div>
+
