@@ -122,7 +122,7 @@ app->plugin('CleanFragment');
 
 sub add_client( $client ) {
     # It seems that we need some kind of PING / PONG here
-    state $heartbeat = Mojo::IOLoop->timer( 5 => sub($t) {
+    state $heartbeat = Mojo::IOLoop->timer( 10 => sub($t) {
         for my $c (values %clients) {
             use Mojo::WebSocket qw(WS_PING);
             local $| = 1;
@@ -135,12 +135,17 @@ sub add_client( $client ) {
     my $id = $last_id++;
     my $clients = \%clients;
     $clients->{ $id } = $client->tx;
-    $client->inactivity_timeout(60);
     $client->on(finish => sub( $c, @rest ) {
         say "Client $id went away";
         delete $clients->{ $id };
     });
-    say "Added client $id as WS client";
+
+    $client->on('json' => sub ($c, $msg) {
+        use Data::Dumper;
+        warn "Client message: " . Dumper $msg;
+    });
+
+    #say "Added client $id as WS client";
     $id;
 }
 
