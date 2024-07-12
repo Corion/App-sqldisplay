@@ -391,7 +391,7 @@ thead {
 </html>
 
 @@tabs.html.ep
-<div class="tabs">
+<div class="tabs" id="nav-tabs" hx-boost="false">
     <ol id="ui-tabs">
 % for my $t ($tabs->@*) {
         <li class="<%= $t->{active} ? "active" : "" %>">
@@ -402,7 +402,7 @@ thead {
 </div>
 
 @@query.html.ep
-<div id="table-<%= clean_fragment($res->{title}) %>" hx-swap-oob="true">
+<div id="table-<%= clean_fragment($res->{title}) %>">
 <h1><%= $res->{title} %></h1>
 % if( $res->{error} ) {
     <div class="text-danger">
