@@ -67,7 +67,11 @@ sub load_sheet( $self, $file = $self->spreadsheet_file ) {
     my $base;
     $sheet->dbh->sqlite_create_function('url', -1, sub($url, $base=undef) {
         if( defined $url ) {
-            $base //= Mojo::URL->new( $s->url_base->clone );
+            if( ! $base ) {
+                $base = Mojo::URL->new( $s->url_base->clone );
+            } elsif( $base and ! ref $base ) {
+                $base = Mojo::URL->new( $base );
+            }
             return Mojo::URL->new($url)->base($base)->to_abs
         } else {
             return undef
