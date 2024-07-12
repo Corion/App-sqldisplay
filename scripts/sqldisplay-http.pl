@@ -205,11 +205,17 @@ $watcher->on('modify' => \&file_changed);
 $app->load_config();
 $app->load_sheet();
 
-websocket '/notify' => sub($c) {
-    my $client_id = add_client( $c );
+sub fix_url_base( $c ) {
     if(! $app->url_base ) {
+        warn "Fixing URL base to " . $c->req->url->clone->to_abs;
         $app->url_base( $c->req->url->clone->to_abs );
     };
+}
+
+websocket '/notify' => sub($c) {
+    fix_url_base( $c );
+    my $client_id = add_client( $c );
+
     # Just in case an old client reconnects
     # Maybe that client could tell us what version it has so we don't render
     # this page twice?! Also, what tab it has?!
@@ -227,16 +233,18 @@ sub get_tabs( $active ) {
 
 sub render_index( $c ) {
     # rerun all queries
-    if( ! $app->url_base ) {
-        $app->url_base( $c->req->url->clone->to_abs );
-    }
+    fix_url_base( $c );
     my $name = $c->param('tab');
     my $active;
     if( defined $name ) {
         ($active) = grep { $name eq $_->{name} } $app->tabs->@*;
     };
+    if( ! $active ) {
+        say "No tab found for '$name' in " . join ", ", map { $_->{name} } $app->tabs->@*;
+    };
     $active //= $app->tabs->[0];
     $name //= $active->{name};
+    say "Rendering for '$name'";
 
     my @results = $app->run_queries( $app->queries_for_tab( $name ) );
     my $tabs = get_tabs( $active->{name} );
@@ -247,9 +255,7 @@ get '/index' => \&render_index;
 
 get '/query/:name' => sub( $c ) {
     # Get results for one specific query
-    if(! $app->url_base ) {
-        $app->url_base( $c->req->url->clone->to_abs );
-    };
+    fix_url_base( $c );
     my $q = $c->param('name');
 
     (my $query) = grep { $_->{title} eq $q } $app->queries->@*;
