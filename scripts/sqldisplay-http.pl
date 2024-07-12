@@ -391,7 +391,7 @@ thead {
 </html>
 
 @@tabs.html.ep
-<div class="tabs" id="nav-tabs" hx-boost="false">
+<div class="tabs" id="nav-tabs" hx-boost="true">
     <ol id="ui-tabs">
 % for my $t ($tabs->@*) {
         <li class="<%= $t->{active} ? "active" : "" %>">
