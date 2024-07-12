@@ -245,10 +245,11 @@ sub render_index( $c ) {
         ($active) = grep { $name eq $_->{name} } $app->tabs->@*;
     };
     if( ! $active ) {
+        $name //= '';
         say "No tab found for '$name' in " . join ", ", map { $_->{name} } $app->tabs->@*;
+        $active = $app->tabs->[0];
+        $name = $active->{name};
     };
-    $active //= $app->tabs->[0];
-    $name //= $active->{name};
     say "Rendering for '$name'";
 
     my @results = $app->run_queries( $app->queries_for_tab( $name ) );
