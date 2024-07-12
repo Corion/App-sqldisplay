@@ -211,13 +211,14 @@ websocket '/notify' => sub($c) {
         $app->url_base( $c->req->url->clone->to_abs );
     };
     # Just in case an old client reconnects
-    # Maybe that client could tell us ...
-    #if( $c->param('version') ne $checksum ) {
+    # Maybe that client could tell us what version it has so we don't render
+    # this page twice?! Also, what tab it has?!
+    if( $c->param('version') != $$ ) {
         say "Updating client page";
         render_index($c);
         my $html = $c->render_to_string('index');
         notify_client( $client_id => $html );
-    #};
+    };
 };
 
 sub get_tabs( $active ) {
@@ -371,7 +372,7 @@ thead {
 
 </style>
 </head>
-<body hx-ext="ws" ws-connect="/notify" >
+<body hx-ext="ws" ws-connect="/notify?version=<%= $$ %>" >
     <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
             <!--<div id="row" class="ui-main-left"> -->
