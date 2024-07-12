@@ -40,9 +40,6 @@ has 'url_base' => (
 );
 
 sub documents( $self ) {
-    if( ! Mojo::File->new( $self->{config}->documents )->is_abs ) {
-        $self->config->{documents} = dirname($self->query_file) . '/' . $self->config->{documents};
-    }
     return $self->config->{documents}
 }
 
@@ -52,6 +49,12 @@ sub tabs( $self ) {
 
 sub load_config( $self, $file = $self->config_file ) {
     my ($config, @queries) = LoadFile($file);
+
+    $config->{documents} = Mojo::File->new( $config->{documents});
+    if( ! $config->{documents}->is_abs ) {
+        $self->config->{documents} = Mojo::File->new( dirname($self->config_file) . '/' . $self->config->{documents});
+    }
+
     $self->config( $config );
     $self->queries( \@queries );
     return $self
