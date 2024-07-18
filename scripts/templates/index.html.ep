@@ -39,12 +39,22 @@ body { margin: 0px; }
   width: 50%;
   overflow: auto;
   /* background: #ccc; */
+  resize: horizontal;
 }
 
 .ui-main-right {
   width: 50%;
   overflow: auto;
   /* background: #bbb; */
+  flex: 1; /* grow automatically to fill the rest */
+  min-width: 0px;
+}
+
+.ui-resizer-horizontal {
+  cursor: col-resize;
+  user-select: none;
+  min-width: 8px;
+  background: #f00;
 }
 
 .ui-bottom {
@@ -92,8 +102,59 @@ thead {
 }
 
 </style>
+
+<!-- Make all .slider thingies slide their left/right neighbours -->
+<!-- Ugh - this should run on every page change, not only on load %-) -->
+<script>
+function setupSliders() {
+    let sliders = document.querySelectorAll('.ui-resizer-horizontal');
+
+    for( let slider of sliders ) {
+        // on mouse down (drag start)
+        slider.onmousedown = function dragMouseDown(e) {
+          let target = slider.previousElementSibling;
+          let prev   = slider.previousElementSibling;
+          let next   = slider.nextElementSibling;
+          console.log(target);
+          let resizeThis = window.getComputedStyle(target).getPropertyValue("resize");
+          if( ! resizeThis ) {
+            // Hope that the other side is resizable
+            target = next;
+            let resizeThis = window.getComputedStyle(target).getPropertyValue("resize");
+            if(! resizeThis ) {
+              console.log("Neither sibling is allowed to .resize", slider);
+            }
+          }
+          // get position of mouse
+          let dragX = e.clientX;
+          // register a mouse move listener if mouse is down
+          // if either side is (or contains) an IFRAME, you will have to
+          // ignore mouse events for it:
+          if( next.nodeName == 'IFRAME' ) {
+            next.style["pointer-events"] = 'none';
+          }
+          document.onmousemove = (e) => {
+            // e.clientX will be the position of the mouse as it has moved a bit now
+            // offsetHeight is the height of the block-1
+            target.style.width = prev.offsetWidth + e.clientX - dragX + "px";
+            // update variable - till this pos, mouse movement has been handled
+            dragX = e.clientX;
+          }
+          // remove mouse-move listener on mouse-up (drag is finished now)
+          document.onmouseup = () => {
+              // restore pointer behaviour
+              if( next.nodeName == 'IFRAME' ) {
+                next.style["pointer-events"] = 'none';
+              }
+              document.onmousemove = document.onmouseup = null;
+          }
+        }
+    }
+}
+</script>
+
 </head>
-<body hx-ext="ws" ws-connect="/notify?version=<%= $$ %>" >
+<body hx-ext="ws" ws-connect="/notify?version=<%= $$ %>" onload="setupSliders()" >
     <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
             <!--<div id="row" class="ui-main-left"> -->
@@ -102,6 +163,7 @@ thead {
 %= include 'query', res => $res;
 % }
             </div>
+            <div class="ui-resizer-horizontal"></div>
             <iframe name="detail" class="ui-main-right"></iframe>
         </div>
         <div class="ui-bottom">
