@@ -258,6 +258,19 @@ sub render_index( $c ) {
     $c->stash( results => \@results );
 };
 get '/index' => \&render_index;
+post '/index' => sub($c) {
+    #for my $p ($c->req->params->names->@*) {
+    #    say "$p -> " . $c->param($p);
+    #}
+    my @votes = grep { /^vote_/ } $c->req->params->names->@*;
+    if( $c->req->headers->header('HX-Request')) {
+        say "Returning just the vote field $votes[0] -> " . $c->param($votes[0]);
+        $c->render( text => sprintf q{<div class="vote">%s</div>}, $c->param( $votes[0] ));
+    } else {
+        say "Returning the full page";
+        return render_index($c);
+    }
+};
 
 get '/query/:name' => sub( $c ) {
     # Get results for one specific query
