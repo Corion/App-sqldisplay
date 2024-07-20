@@ -53,8 +53,9 @@ sub load_config( $self, $file = $self->config_file ) {
     if( $config->{documents}) {
         $config->{documents} = Mojo::File->new( $config->{documents});
         if( ! $config->{documents}->is_abs ) {
-            $self->config->{documents} = Mojo::File->new( dirname($self->config_file) . '/' . $self->config->{documents});
+            $config->{documents} = Mojo::File->new( dirname($file) . '/' . $config->{documents});
         }
+        say "Using documents at $config->{documents}";
     };
 
     $self->config( $config );
