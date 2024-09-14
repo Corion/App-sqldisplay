@@ -151,6 +151,10 @@ function setupSliders() {
         }
     }
 }
+
+htmx.onLoad( (elt) => {
+    setupSliders();
+});
 </script>
 
 </head>
@@ -158,13 +162,13 @@ function setupSliders() {
     <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
             <!--<div id="row" class="ui-main-left"> -->
-            <div class="ui-main-left" style="overflow: auto;">
+            <div id="ui-main-left" class="ui-main-left" style="overflow: auto;">
 % for my $res (@$results) {
 %= include 'query', res => $res;
 % }
             </div>
-            <div class="ui-resizer-horizontal"></div>
-            <iframe name="detail" class="ui-main-right"></iframe>
+            <div id="resizer" class="ui-resizer-horizontal"></div>
+            <iframe id="detail" name="detail" class="ui-main-right"></iframe>
         </div>
         <div class="ui-bottom">
 %= include 'tabs';
