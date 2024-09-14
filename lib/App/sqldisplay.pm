@@ -18,7 +18,11 @@ has 'config_file' => (
 
 has 'spreadsheet_file' => (
     is => 'ro',
-    required => 1,
+    required => 0, # we don't need this if we get a dbh
+);
+
+has 'dbh' => (
+    is => 'rw',
 );
 
 has 'config' => (
@@ -81,6 +85,7 @@ sub load_sheet( $self, $file = $self->spreadsheet_file ) {
         };
     });
     $self->sheet( $sheet );
+    $self->dbh( $sheet->dbh );
     return $sheet
 }
 
@@ -109,8 +114,7 @@ sub run_query( $self, $dbh, $query ) {
 }
 
 sub run_queries($self, @queries) {
-    my $dbh = $self->sheet->dbh;
-
+    my $dbh = $self->dbh;
     map { $self->run_query( $dbh, $_ ) } @queries
 }
 
