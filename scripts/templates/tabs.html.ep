@@ -1,4 +1,4 @@
-<div class="tabs" id="nav-tabs" hx-boost="true">
+<div class="tabs" id="nav-tabs">
     <ol id="ui-tabs">
 % for my $t ($tabs->@*) {
         <li class="<%= $t->{active} ? "active" : "" %>">

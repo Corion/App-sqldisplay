@@ -5,18 +5,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="htmx.2.0.1.min.js"></script>
-<script src="ws.1.9.12.js"></script>
-<script type="module" src="/morphdom-esm.2.7.4.js"></script>
+<script src="ws.2.0.1.js"></script>
+<script type="module" src="/morphdom-umd.min.2.7.4.js"></script>
 <script type="module" src="/morphdom-swap.2.0.0.js"></script>
 
+<!-- <script src="https://unpkg.com/htmx.org/dist/ext/debug.js"></script> -->
 
 <link href="bootstrap.5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="sqldisplay.css">
 
 <!-- Make all .slider thingies slide their left/right neighbours -->
-<!-- Ugh - this should run on every page change, not only on load %-) -->
 <script>
 function setupSliders() {
+    console.log("Setting up sliders");
     let sliders = document.querySelectorAll('.ui-resizer-horizontal');
 
     for( let slider of sliders ) {
@@ -25,7 +26,6 @@ function setupSliders() {
           let target = slider.previousElementSibling;
           let prev   = slider.previousElementSibling;
           let next   = slider.nextElementSibling;
-          console.log(target);
           let resizeThis = window.getComputedStyle(target).getPropertyValue("resize");
           if( ! resizeThis ) {
             // Hope that the other side is resizable
@@ -69,12 +69,13 @@ htmx.onLoad( (elt) => {
 
 </head>
 <body hx-boost="true"
-      hx-ext="ws,morphdom-swap,debug"
-      ws-connect="/notify?version=<%= $$ %>" onload="setupSliders()"
-      hx-swap="morphdom-swap" >
+      hx-ext="ws,morphdom-swap"
+      ws-connect="/notify?version=<%= $$ %>"
+      onload="setupSliders()"
+      xx-hx-swap="morphdom"
+    >
     <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
-            <!--<div id="row" class="ui-main-left"> -->
             <div id="ui-main-left" class="ui-main-left" style="overflow: auto;">
 % for my $res (@$results) {
 %= include 'query', res => $res;
