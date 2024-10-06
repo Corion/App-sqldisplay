@@ -252,6 +252,7 @@ sub render_index( $c ) {
     my $tabs = get_tabs( $active->{name} );
     $c->stash( tabs => $tabs );
     $c->stash( results => \@results );
+    $c->stash( spreadsheet => $spreadsheet_file );
 };
 get '/index' => \&render_index;
 
