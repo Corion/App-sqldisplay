@@ -6,7 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="htmx.2.0.1.min.js"></script>
 <script src="ws.1.9.12.js"></script>
-<script src="idiomorph-ext.0.3.0.js"></script>
+<script type="module" src="/morphdom-esm.2.7.4.js"></script>
+<script type="module" src="/morphdom-swap.2.0.0.js"></script>
+
 
 <link href="bootstrap.5.3.3.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <style>
@@ -159,7 +161,10 @@ htmx.onLoad( (elt) => {
 </script>
 
 </head>
-<body hx-ext="ws" ws-connect="/notify?version=<%= $$ %>" onload="setupSliders()" >
+<body hx-boost="true"
+      hx-ext="ws,morphdom-swap,debug"
+      ws-connect="/notify?version=<%= $$ %>" onload="setupSliders()"
+      hx-swap="morphdom-swap" >
     <div id="container" class="my-container">
         <div id="main_content" class="ui-main">
             <!--<div id="row" class="ui-main-left"> -->
