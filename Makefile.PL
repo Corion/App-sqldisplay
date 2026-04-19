@@ -123,11 +123,6 @@ sub regen_README {
             pod_section($_[0], 'DESCRIPTION' ),
             <<INSTALL,
 
-<a href="https://github.com/Corion/App-sqldisplay">
-<video width="1920px" alt="App::sqldisplay animation" autoplay loop playsinline controls src="demo/app-sqldisplay-update-demo.webm" type="video/webm" /></video>
-</a>
-
-
 INSTALLATION
 
 This is a Perl module distribution. It should be installed with whichever
@@ -174,6 +169,10 @@ INSTALL
 [![Windows](https://github.com/Corion/$distbase/workflows/windows/badge.svg)](https://github.com/Corion/$distbase/actions?query=workflow%3Awindows)
 [![MacOS](https://github.com/Corion/$distbase/workflows/macos/badge.svg)](https://github.com/Corion/$distbase/actions?query=workflow%3Amacos)
 [![Linux](https://github.com/Corion/$distbase/workflows/linux/badge.svg)](https://github.com/Corion/$distbase/actions?query=workflow%3Alinux)
+
+<a href="https://github.com/Corion/App-sqldisplay">
+<video width="1920px" alt="App::sqldisplay animation" autoplay loop playsinline controls src="demo/app-sqldisplay-update-demo.webm" type="video/webm" /></video>
+</a>
 
 STATUS
         update_file( 'README.mkdn', $readme_mkdn );
