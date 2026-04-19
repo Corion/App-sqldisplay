@@ -1,0 +1,39 @@
+---
+abstract: 'Display live results of SQL queries against a spreadsheet in HTML'
+author:
+  - 'Max Maischein <corion@cpan.org>'
+build_requires:
+  ExtUtils::MakeMaker: '0'
+  Test::More: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 0
+generated_by: 'ExtUtils::MakeMaker version 7.70, CPAN::Meta::Converter version 2.150010'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: App-sqldisplay_http
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  DBIx::Spreadsheet: '0'
+  Encode: '0'
+  Exporter: '5'
+  File::Basename: '0'
+  Getopt::Long: '0'
+  Mojo::File::ChangeNotify: '0.03'
+  Mojolicious: '8'
+  PerlX::Maybe: '0'
+  Text::Table: '0'
+  Try::Tiny: '0'
+  perl: '5.020'
+resources:
+  bugtracker: https://github.com/Corion/App-sqldisplay_http/issues
+  license: https://dev.perl.org/licenses/
+  repository: git://github.com/Corion/App-sqldisplay_http.git
+version: '0.01'
+x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
+x_static_install: 1

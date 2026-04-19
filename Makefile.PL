@@ -53,6 +53,7 @@ my %module = (
         'Exporter'           => 5, # for 'import'
         'Getopt::Long'       => 0,
         'Mojolicious'        => 8, # for the HTTP output
+        'Mojo::File::ChangeNotify' => '0.03',
         'File::Basename'     => 0,
         'Encode'             => 0,
         'Try::Tiny'          => 0,

@@ -3,6 +3,8 @@ use strict;
 use warnings;
 
 use Mojolicious::Lite;
+use lib '../Mojo-File-ChangeNotify/lib';
+use Mojo::File::ChangeNotify;
 use File::Basename 'dirname';
 
 use lib 'lib';
@@ -32,64 +34,6 @@ sub register ($self, $app, $conf) {
 # Should we read the spreadsheet from the queries file?!
 # At least optionally?
 
-package MojoX::ChangeNotify {
-    use strict;
-    use warnings;
-
-    use File::ChangeNotify;
-    use File::ChangeNotify::Event;
-    use Mojo::IOLoop::Subprocess;
-    use Mojo::Base 'Mojo::EventEmitter';
-
-    use 5.020; # for signatures
-    use feature 'signatures';
-    no warnings 'experimental::signatures';
-
-    has 'child';
-
-    sub instantiate_watcher($self, %options) {
-        my $subprocess = Mojo::IOLoop::Subprocess->new();
-        $self->child( $subprocess );
-
-        $subprocess->on('progress' => sub( $subprocess, @events ) {
-            # Emit "changed" events
-
-            for my $ev (@events) {
-                delete $ev->{attributes} unless $ev->{has_attributes};
-                delete $ev->{content} unless $ev->{has_content};
-
-                $self->emit( $ev->{type}, File::ChangeNotify::Event->new( $ev ));
-            };
-        });
-
-        # Operation that would block the event loop for 5 seconds (with promise)
-        $subprocess->run_p(sub($subprocess) {
-            my $watcher = File::ChangeNotify->instantiate_watcher( %options );
-            while( my @events = $watcher->wait_for_events()) {
-                #warn sprintf "Child got '%s'", $events[0]->type;
-
-                @events = map {
-                    +{ type           => $_->type,
-                       path           => $_->path,
-                       attributes     => $_->attributes,
-                       has_attributes => $_->has_attributes,
-                       content        => $_->content,
-                       has_content    => $_->has_content,
-                    },
-                } @events;
-
-                $subprocess->progress( @events );
-            };
-        })->catch(sub  {
-            my $err = shift;
-            say "Subprocess error: $err";
-        });
-    };
-
-    # emits "changed"
-
-};
-
 use Getopt::Long ':config', 'pass_through';
 GetOptions(
     'f|spreadsheet=s' => \my $spreadsheet_file,
@@ -99,11 +43,12 @@ GetOptions(
 
 $year //= (localtime)[5] + 1900;
 
-my $watcher = MojoX::ChangeNotify->new();
 $spreadsheet_file //= "/home/corion/Dokumente/Frankfurt Perlmongers e.V/Buchhaltung/Buchhaltung $year/$year Rechnungen.ods";
 $query_file       //= dirname($spreadsheet_file) . '/dashboard.yml';
 
-$watcher->instantiate_watcher(
+warn dirname($spreadsheet_file);
+
+my $watcher = Mojo::File::ChangeNotify->instantiate_watcher(
 # Add the spreadsheet here
 # Add the query file here
 # Add the html template here
@@ -168,12 +113,12 @@ my $app = App::sqldisplay->new(
 sub file_changed( $self, $ev ) {
     #say "Modified: $ev->{path}";
     my $dirty;
-    if( $ev->path eq $spreadsheet_file ) {
+    if( $ev->{path} eq $spreadsheet_file ) {
         # reload the DB
         say "Reloading spreadsheet";
         $app->load_sheet();
         $dirty = 1;
-    } elsif( $ev->path eq $query_file ) {
+    } elsif( $ev->{path} eq $query_file ) {
         # reload the queries
         say "Reloading queries";
         $app->load_config();
@@ -200,8 +145,14 @@ sub file_changed( $self, $ev ) {
         notify_clients( @html );
     };
 };
-$watcher->on('create' => \&file_changed);
-$watcher->on('modify' => \&file_changed);
+$watcher->on('change' => sub( $watcher, @event_lists ) {
+    warn "Change";
+    for my $l (@event_lists) {
+        for my $ev ($l->@*) {
+            file_changed( $watcher, $ev );
+        }
+    }
+});
 
 $app->load_config();
 $app->load_sheet();
@@ -255,6 +206,10 @@ sub render_index( $c ) {
     $c->stash( spreadsheet => $spreadsheet_file );
 };
 get '/index' => \&render_index;
+
+get '/' => sub( $c ) {
+    return $c->redirect_to('index');
+};
 
 get '/query/:name' => sub( $c ) {
     # Get results for one specific query
