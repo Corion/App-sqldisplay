@@ -15,14 +15,14 @@
 </thead>
 <tbody>
 % for my $r (@{ $res->{rows}}) {
-    <tr>
     % for my $c (@{ $res->{headers}}) {
         % my $class = $c->{type} // '';
+        % my $changed = $r->{_changed} // '';
         % my $urlify = $c->{name} =~ m!\burl\s*\(!;
         % if( $urlify ) {
-        <td class="<%= $class %>"><a href="<%= $r->{ $c->{name} } %>" target="detail"><%= $r->{ $c->{name} } %></a></td>
+        <td class="<%= join " ", $changed, $class %>"><a href="<%= $r->{ $c->{name} } %>" target="detail"><%= $r->{ $c->{name} } %></a></td>
         % } else {
-        <td class="<%= $class %>"><%= $r->{ $c->{name} } %></td>
+        <td class="<%= join " ", $changed, $class %>"><%= $r->{ $c->{name} } %></td>
         % }
     % }
     </tr>

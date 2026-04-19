@@ -2,6 +2,11 @@ App::sqldisplay_http - Display live results of SQL queries against a spreadsheet
 
 
 
+<a href="https://github.com/Corion/App-sqldisplay">
+<video width="1920px" alt="App::sqldisplay animation" autoplay loop playsinline controls src="demo/app-sqldisplay-update-demo.webm" type="video/webm" /></video>
+</a>
+
+
 INSTALLATION
 
 This is a Perl module distribution. It should be installed with whichever

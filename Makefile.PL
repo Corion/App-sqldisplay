@@ -122,6 +122,11 @@ sub regen_README {
             pod_section($_[0], 'DESCRIPTION' ),
             <<INSTALL,
 
+<a href="https://github.com/Corion/App-sqldisplay">
+<video width="1920px" alt="App::sqldisplay animation" autoplay loop playsinline controls src="demo/app-sqldisplay-update-demo.webm" type="video/webm" /></video>
+</a>
+
+
 INSTALLATION
 
 This is a Perl module distribution. It should be installed with whichever

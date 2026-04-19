@@ -43,6 +43,12 @@ has 'url_base' => (
     is => 'rw',
 );
 
+# For simplistic highlighting of changes
+has 'prev_query_results' => (
+    is => 'rw',
+    default => sub { {} },
+);
+
 sub documents( $self ) {
     return $self->config->{documents}
 }
@@ -105,6 +111,25 @@ sub run_query( $self, $dbh, $query ) {
     } catch {
         $error = $_;
     };
+
+    # Mark all rows that changed between this and last time. We are not
+    # picky and will assume that things are ordered, and no new rows
+    # appear
+    if( my $prev = $self->prev_query_results->{ $query->{title} }) {
+        my $i = 0;
+        for my $r ($rows->@*) {
+            delete $r->{_changed};
+            my $prev_r = $prev->[$i++] // {};
+            for my $k (sort keys $r->%*) {
+                if( $prev_r->{$k} ne $r->{$k} ) {
+                    $r->{_changed} = 'changed';
+                }
+            }
+        }
+    }
+    $self->prev_query_results->{ $query->{title} } = $rows;
+
+
     return {
               title => $query->{title},
             headers => $cols,
